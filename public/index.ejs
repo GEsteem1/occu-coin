@@ -5,6 +5,31 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 		<link rel="stylesheet" href="assets/css/main.css" />
+		<style>
+			body {
+				opacity: 0.5;
+				animation: in 1s forwards;
+			}
+
+			@keyframes in {
+				to {
+					opacity: 1;
+				}
+			}
+
+			#gxew34857 {
+				opacity: 0;
+				transform: translateY(-20px);
+				animation: in2 2s ease forwards;
+			}
+
+			@keyframes in2 {
+				to {
+					opacity: 1;
+					transform: translateY(20px);
+				}
+			}
+		</style>
 	</head>
 	<body class="landing is-preload">
 		<div id="page-wrapper">
@@ -23,18 +48,28 @@
 								<li><a href="/privacy">Privacy</a></li>
 							</ul>
 						</li>
-						<li><a href="/login" class="button default">Login</a></li>
-		  				<li><a href="/signup" class="button">Sign Up</a></li>
+						<% if (locals.username) { %>
+							<li><a href="/profile"><i class="fa fa-user" style="margin-right: 10px;"></i>Hello, <%= locals.username %></a></li>
+							<li><a href="/app" class="button">Open App</a></li>
+							<li><a href="/logout" class="button">Logout</a></li>
+						<% } else { %>
+							<li><a href="/login" class="button default">Login</a></li>
+							<li><a href="/signup" class="button">Sign Up</a></li>
+						<% } %>
 					</ul>
 				</nav>
 			</header>
 
 			<!-- Banner -->
 				<section id="banner">
-					<h2 style="font-weight: 1000">OccuCoin</h2>
+					<h2 id="gxew34857" style="font-weight: 1000">OccuCoin</h2>
 					<p style="text-transform: uppercase; font-size: 1.5rem;">Motivitating people around the world</p>
 					<ul class="actions special">
-						<li><a href="/signup" class="button primary">Sign Up</a></li>
+						<% if (locals.username) { %>
+							<li><a href="/signup" class="button primary">Open App</a></li>	
+						<% } else { %>
+							<li><a href="/signup" class="button primary">Sign Up</a></li>
+						<% } %>
 						<li><a href="/about" class="button">Learn More</a></li>
 					</ul>
 				</section>

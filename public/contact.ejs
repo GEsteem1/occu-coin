@@ -27,8 +27,14 @@
 								<li><a href="/privacy">Privacy</a></li>
 							</ul>
 						</li>
-						<li><a href="/login" class="button default">Login</a></li>
-		  				<li><a href="/signup" class="button">Sign Up</a></li>
+						<% if (locals.username) { %>
+							<li><a href="/profile"><i class="fa fa-user" style="margin-right: 10px;"></i>Hello, <%= locals.username %></a></li>
+							<li><a href="/app" class="button">Open App</a></li>
+							<li><a href="/logout" class="button">Logout</a></li>
+						<% } else { %>
+							<li><a href="/login" class="button default">Login</a></li>
+							<li><a href="/signup" class="button">Sign Up</a></li>
+						<% } %>
 					</ul>
 				</nav>
 			</header>
