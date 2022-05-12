@@ -1,1 +1,55 @@
-<h1>HIIIIII</h1>
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]>      <html class="no-js"> <!--<![endif]-->
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>OccuCoin | App</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<style>
+			input {
+				margin-top: 10px;
+				margin-bottom: 10px;
+			}
+		</style>
+		<link rel="stylesheet" href="../assets/css/main.css">
+	</head>
+	<body class="is-preload">
+		<!--[if lt IE 7]>
+			<p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
+		<![endif]-->
+
+		<div id="page-wrapper">
+			<section id="main" class="container">
+				<header>
+					<img src="<%= locals.pic %>">
+					<% if (locals.name) { %>
+						<h2>Welcome, <b><%= locals.name %></b></h2>
+					<% } %>
+					<hr />
+					<a class="button primary" href="/logout">Logout</a>
+				</header>
+				<div class="box">
+					<form id="main" action="/app" method="post">
+						<input type="email" name="email" placeholder="Infinite Campus Email">
+						<input type="password" name="password" placeholder="Password">
+						<input type="submit" value="Retreive Grades">
+					</form>
+					<% if(locals.grades) { %>
+						<h2>Grades</h2>
+						<ul>
+							<% locals.grades.forEach((grade, i) => { %>
+								<li><%=grade%></li>
+							<% }) %>
+						</ul>
+					<% } %>
+				</div>
+			</section>
+		</div>
+		
+		<script src="./main.js" async defer></script>
+	</body>
+</html>

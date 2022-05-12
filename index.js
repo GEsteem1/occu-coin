@@ -1,18 +1,25 @@
 const express = require('express')
 const path = require('path')
+const favicon = require("serve-favicon")
+var bodyParser = require('body-parser') 
 
 const dotenv = require("dotenv").config()
 const { auth } = require('express-openid-connect')
-const { requiresAuth } = require('express-openid-connect');
+const { requiresAuth } = require('express-openid-connect')
+
+const { spawn } = require("child_process")
 
 const app = express()
 const PORT = process.env.port || 3000
 
 app.set("view engine", "ejs")
-app.set('views', path.join(__dirname, '/public'));
+app.set('views', path.join(__dirname, '/public'))
 
-app.use(express.static("public"));
-app.use(express.urlencoded({ extended: false }))
+app.use(express.static("public"))
+app.use(bodyParser.urlencoded({
+	extended: true
+})) 
+app.use(favicon(path.join(__dirname, "/public/images/icon.png")))
 
 
 const config = {
@@ -26,9 +33,6 @@ const config = {
 
 // auth router attaches /login, /logout, and /callback routes to the baseURL
 app.use(auth(config))
-
-
-
 
 app.get("/", (req, res) => {
 	if (req.oidc.isAuthenticated()) {
@@ -62,10 +66,6 @@ app.get("/privacy", (req, res) => {
 	}
 })
 
-app.get('/profile', requiresAuth(), (req, res) => {
-	res.send(JSON.stringify(req.oidc.user));
-});
-
 app.get("/signup", (req, res) => {
 	res.redirect('https://dev-mbqa51sr.us.auth0.com/u/signup?state=hKFo2SB3WDE2R2pmN0RoYkdZclh5cDlXdFlldlB3RWFWUkxUN6Fur3VuaXZlcnNhbC1sb2dpbqN0aWTZIDkxaElnajJTSUMwU05GNHQwQ2gtcllkVGIxR0tjSkZro2NpZNkgMU8wUnY0OVdRNmJvZlZrbmRIY2ZpU2V0ZHV1eTNKb04')
 })
@@ -73,10 +73,30 @@ app.get("/signup", (req, res) => {
 // App
 app.get("/app", (req, res) => {
 	if (req.oidc.isAuthenticated()) {
-		res.render("app/main")
+		res.render("app/main", {"name": req.oidc.user.given_name, "email": req.oidc.email})
 	} else {
-		res.status(404).send("Sesssion expired.")
+		res.status(404).send("Session expired.")
 	}
+})
+
+app.post("/app", (req, res) => {
+	let email = req.body.email
+	let password = req.body.password
+
+	let data = ""
+
+	const python = spawn("python", ["./infinitecampus.py", email, password])
+
+	python.stdout.on("data", (d) => {
+		data += d.toString()
+	})
+	python.stderr.on("data", d => {console.log("Error, " + data)})
+
+	python.on("exit", (c) => {
+		data = data.split("\r\n")
+		data.pop()
+		res.render("app/main", {"name": req.oidc.user.given_name, "email": req.oidc.email, "grades": data})
+	})
 })
 
 
