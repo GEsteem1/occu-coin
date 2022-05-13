@@ -14,14 +14,102 @@
 				margin-top: 10px;
 				margin-bottom: 10px;
 			}
+			.lds-roller {
+				display: inline-block;
+				position: relative;
+				width: 80px;
+				height: 80px;
+			  }
+			  .lds-roller div {
+				animation: lds-roller 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+				transform-origin: 40px 40px;
+			  }
+			  .lds-roller div:after {
+				content: " ";
+				display: block;
+				position: absolute;
+				width: 7px;
+				height: 7px;
+				border-radius: 50%;
+				background: rgb(0, 0, 0);
+				margin: -4px 0 0 -4px;
+			  }
+			  .lds-roller div:nth-child(1) {
+				animation-delay: -0.036s;
+			  }
+			  .lds-roller div:nth-child(1):after {
+				top: 63px;
+				left: 63px;
+			  }
+			  .lds-roller div:nth-child(2) {
+				animation-delay: -0.072s;
+			  }
+			  .lds-roller div:nth-child(2):after {
+				top: 68px;
+				left: 56px;
+			  }
+			  .lds-roller div:nth-child(3) {
+				animation-delay: -0.108s;
+			  }
+			  .lds-roller div:nth-child(3):after {
+				top: 71px;
+				left: 48px;
+			  }
+			  .lds-roller div:nth-child(4) {
+				animation-delay: -0.144s;
+			  }
+			  .lds-roller div:nth-child(4):after {
+				top: 72px;
+				left: 40px;
+			  }
+			  .lds-roller div:nth-child(5) {
+				animation-delay: -0.18s;
+			  }
+			  .lds-roller div:nth-child(5):after {
+				top: 71px;
+				left: 32px;
+			  }
+			  .lds-roller div:nth-child(6) {
+				animation-delay: -0.216s;
+			  }
+			  .lds-roller div:nth-child(6):after {
+				top: 68px;
+				left: 24px;
+			  }
+			  .lds-roller div:nth-child(7) {
+				animation-delay: -0.252s;
+			  }
+			  .lds-roller div:nth-child(7):after {
+				top: 63px;
+				left: 17px;
+			  }
+			  .lds-roller div:nth-child(8) {
+				animation-delay: -0.288s;
+			  }
+			  .lds-roller div:nth-child(8):after {
+				top: 56px;
+				left: 12px;
+			  }
+			  @keyframes lds-roller {
+				0% {
+				  transform: rotate(0deg);
+				}
+				100% {
+				  transform: rotate(360deg);
+				}
+			  }
+			  
 		</style>
 		<link rel="stylesheet" href="../assets/css/main.css">
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
 	</head>
 	<body class="is-preload">
 		<!--[if lt IE 7]>
 			<p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
 		<![endif]-->
-
+		<% if (locals.error) { %>
+			<h1>ERROR: <%= locals.error %></h1>
+		<% } %>
 		<div id="page-wrapper">
 			<section id="main" class="container">
 				<header>
@@ -33,10 +121,10 @@
 					<a class="button primary" href="/logout">Logout</a>
 				</header>
 				<div class="box">
-					<form id="main" action="/app" method="post">
-						<input type="email" name="email" placeholder="Infinite Campus Email">
-						<input type="password" name="password" placeholder="Password">
-						<input type="submit" value="Retreive Grades">
+					<form id="main" action="/app" method="POST">
+						<input id="email" type="email" name="email" placeholder="Infinite Campus Email">
+						<input id="password" type="password" name="password" placeholder="Password">
+						<input id="submit" type="submit" value="Retrieve Grades">
 					</form>
 					<% if(locals.grades) { %>
 						<h2>Grades</h2>
