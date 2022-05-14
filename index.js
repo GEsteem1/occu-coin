@@ -8,11 +8,13 @@ const { auth } = require('express-openid-connect');
 const { requiresAuth } = require('express-openid-connect');
 
 // const { spawn } = require("child_process")
-const webdriver = require("selenium-webdriver")
-const chrome = require('selenium-webdriver/chrome');
-const chromedriver = require("chromedriver");
-const {By, Key, until} = require('selenium-webdriver');
-chrome.setDefaultService(new chrome.ServiceBuilder(chromedriver.path).build());
+// const webdriver = require("selenium-webdriver")
+// const chrome = require('selenium-webdriver/chrome');
+// const chromedriver = require("chromedriver");
+// const {By, Key, until} = require('selenium-webdriver');
+// chrome.setDefaultService(new chrome.ServiceBuilder(chromedriver.path).build());
+
+const puppeteer = require("puppeteer");
 
 const app = express();
 const PORT = process.env.port || 3000;
@@ -78,7 +80,7 @@ app.get("/signup", (req, res) => {
 // App
 app.get("/app", (req, res) => {
 	if (req.oidc.isAuthenticated()) {
-		res.render("app/main", {"name": req.oidc.user.given_name, "email": req.oidc.email});
+		res.render("app/main", {"name": req.oidc.user.given_name, "email": req.oidc.email, "pic": req.oidc.user.picture});
 	} else {
 		res.status(404).send("Session expired.");
 	}
@@ -91,31 +93,47 @@ app.post("/app", (req, res) => {
 	let data = [];
 
 	(async () => {
-		let driver = await new webdriver.Builder().forBrowser(webdriver.Browser.CHROME).setChromeOptions(new chrome.Options().headless()).build();
+		// let driver = await new webdriver.Builder().forBrowser(webdriver.Browser.CHROME).setChromeOptions(new chrome.Options().headless()).build();
+		const browser = await puppeteer.launch({headless: true});
 		try {
-			await driver.get("https://adfs.svvsd.org/adfs/ls/?client-request-id=cd388547-ac70-46bf-ad73-2f7195983ae3&username=&wa=wsignin1.0&wtrealm=urn%3afederation%3aMicrosoftOnline&wctx=estsredirect%3d2%26estsrequest%3drQQIARAA42KwUs4oKSkottLXz0zWKy4rK07Ryy9K109OzC0oLdYvLikrSszMKxLiEnBvtThbsGa_29pi_cKpM6wez2LkhCtfxaiDz5TgYH-YSfrBnsH6hxgV4y2TzEwSk9OME9MMkiwMjIxTkswNLQ2TTQ2TDBNTTZItLzAyvmBkvMXEGpyYm2M0i5kHbkJxZvEmZhXjVHPLJENDC10L0xQTXZMkM1PdxMRUU91Uc7OUJCMTYwOTJIsLLDyvWHgMWK04OLgE-CXYFBh-sDAuYgV6xl7zgKn24YtOzcGB01er-TGcYtUvL7WoKvRPLim39ExOqaoIz_epDM9NNYrwCEj2S_N2KsvxcksuCfD2LNYOtDW0MpzAxnuKjeEDG2MHO8MsdoYDnIwHeBl-8E2d2NK1ZG_PWw8A0#");
-			await driver.findElement(By.id("userNameInput")).sendKeys(email);
-			await driver.findElement(By.id("passwordInput")).sendKeys(password);
-			await driver.findElement(By.id("submitButton")).click();
-			await driver.wait(until.urlIs('https://ic.svvsd.org/campus/nav-wrapper/student/portal/student/today'), 10000);
-			await driver.get("https://ic.svvsd.org/campus/nav-wrapper/student/portal/student/grades");
-			await driver.wait(until.elementLocated(By.id("main-workspace")), 10000);
-			await driver.switchTo().frame(driver.findElement(By.id("main-workspace")));
-			await new Promise(r => setTimeout(r, 3000));
-			let grades = await driver.findElements(By.xpath(`//*[contains(text(),'%')]`));
+			const page = await browser.newPage();
+			await page.goto("https://adfs.svvsd.org/adfs/ls/?client-request-id=cd388547-ac70-46bf-ad73-2f7195983ae3&username=&wa=wsignin1.0&wtrealm=urn%3afederation%3aMicrosoftOnline&wctx=estsredirect%3d2%26estsrequest%3drQQIARAA42KwUs4oKSkottLXz0zWKy4rK07Ryy9K109OzC0oLdYvLikrSszMKxLiEnBvtThbsGa_29pi_cKpM6wez2LkhCtfxaiDz5TgYH-YSfrBnsH6hxgV4y2TzEwSk9OME9MMkiwMjIxTkswNLQ2TTQ2TDBNTTZItLzAyvmBkvMXEGpyYm2M0i5kHbkJxZvEmZhXjVHPLJENDC10L0xQTXZMkM1PdxMRUU91Uc7OUJCMTYwOTJIsLLDyvWHgMWK04OLgE-CXYFBh-sDAuYgV6xl7zgKn24YtOzcGB01er-TGcYtUvL7WoKvRPLim39ExOqaoIz_epDM9NNYrwCEj2S_N2KsvxcksuCfD2LNYOtDW0MpzAxnuKjeEDG2MHO8MsdoYDnIwHeBl-8E2d2NK1ZG_PWw8A0#");
+			// await driver.findElement(By.id("userNameInput")).sendKeys(email);
+			// await driver.findElement(By.id("passwordInput")).sendKeys(password);
+			// await driver.findElement(By.id("submitButton")).click();
+			// await driver.wait(until.urlIs('https://ic.svvsd.org/campus/nav-wrapper/student/portal/student/today'), 10000);
+			// await driver.get("https://ic.svvsd.org/campus/nav-wrapper/student/portal/student/grades");
+			// await driver.wait(until.elementLocated(By.id("main-workspace")), 10000);
+			// await driver.switchTo().frame(driver.findElement(By.id("main-workspace")));
+			// await new Promise(r => setTimeout(r, 3000));
+			// let grades = await driver.findElements(By.xpath(`//*[contains(text(),'%')]`));
+
+			await page.type("#userNameInput", email);
+			await page.type("#passwordInput", password);
+			await page.click("#submitButton");
+			await page.waitForFunction("window.location.href == 'https://ic.svvsd.org/campus/nav-wrapper/student/portal/student/today'");
+			await page.goto("https://ic.svvsd.org/campus/nav-wrapper/student/portal/student/grades");
+			await page.waitForNavigation({ waitUntil: 'networkidle2' });
+			await new Promise(r => setTimeout(r, 000));
+			await page.waitForSelector("#main-workspace");
+			const elementHandle = await page.waitForSelector('iframe[id="main-workspace"]');
+			const frame = await elementHandle.contentFrame();
+			// const [grades] = await frame.$x(`//*[contains(text(),'%')]`);
+			// const grades = await frame.evaluateHandle(() => document.evaluate(`//*[contains(text(),'%')]`, document, null));
+			const grades = await frame.$x("//*[contains(text(),'%')]");
+			// grades = await page.evaluate(grade => grade.innerText, grades);
 
 			for (let i=0; i < grades.length; i++) {
-				let txt = await grades[i].getText();
+				let txt = await (await grades[i].getProperty("innerText")).jsonValue();
 				
 				if (txt) {
 					data.push(txt);
 				}
 			}
-		} catch (err) {
-			res.render("app/main", { "error": err })
 		} finally {
-			await driver.quit();
-			res.render("app/main", {"name": req.oidc.user.given_name, "email": req.oidc.email, "grades": data})
+			data = data.splice(data.length-6, 6);
+			await browser.close();
+			res.render("app/main", {"name": req.oidc.user.given_name, "email": req.oidc.email, "pic": req.oidc.user.picture, "grades": data})
 		}
 	})();
 
