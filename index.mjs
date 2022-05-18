@@ -1,11 +1,11 @@
-const express = require('express')
-const path = require('path')
-const favicon = require("serve-favicon")
-var bodyParser = require('body-parser') 
+import express from "express"
+import path from "path"
+import favicon from "serve-favicon"
+import bodyParser from "body-parser"
 
-const dotenv = require("dotenv").config();
-const { auth } = require('express-openid-connect');
-const { requiresAuth } = require('express-openid-connect');
+import dotenv from "dotenv"
+dotenv.config();
+import { auth } from "express-openid-connect"
 
 // const { spawn } = require("child_process")
 // const webdriver = require("selenium-webdriver")
@@ -14,7 +14,25 @@ const { requiresAuth } = require('express-openid-connect');
 // const {By, Key, until} = require('selenium-webdriver');
 // chrome.setDefaultService(new chrome.ServiceBuilder(chromedriver.path).build());
 
-const puppeteer = require("puppeteer");
+import puppeteer  from "puppeteer"
+
+import { Low, JSONFile} from "lowdb"
+import { fileURLToPath } from 'url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Use JSON file for storage
+const file = path.join(__dirname, 'db.json');
+const adapter = new JSONFile(file);
+const db = new Low(adapter);
+
+await db.read();
+
+db.data ||= { users: [] };
+const { users } = db.data;
+
+await db.write();
+await db.read();
 
 const app = express();
 const PORT = process.env.port || 3000;
@@ -74,27 +92,67 @@ app.get("/privacy", (req, res) => {
 });
 
 app.get("/signup", (req, res) => {
-	res.redirect('https://dev-mbqa51sr.us.auth0.com/u/signup?state=hKFo2SB3WDE2R2pmN0RoYkdZclh5cDlXdFlldlB3RWFWUkxUN6Fur3VuaXZlcnNhbC1sb2dpbqN0aWTZIDkxaElnajJTSUMwU05GNHQwQ2gtcllkVGIxR0tjSkZro2NpZNkgMU8wUnY0OVdRNmJvZlZrbmRIY2ZpU2V0ZHV1eTNKb04');
+	res.render("signup");
 });
 
+app.post("/signup", (req, res) => {
+	res.redirect('https://dev-mbqa51sr.us.auth0.com/u/signup?state=hKFo2SAxaUJDM1pvRUs2ZUJxaGVYbWhoTkNxOEpNRFQ3OGwwbaFur3VuaXZlcnNhbC1sb2dpbqN0aWTZIHNsQUoyVUY0djl6czA4cE51QUNTekpybzVScmx5bXFro2NpZNkgMU8wUnY0OVdRNmJvZlZrbmRIY2ZpU2V0ZHV1eTNKb04');
+})
+
+function weeksBetween(d1, d2) {
+	if (!d1 || !d2) {
+		return 0;
+	}
+    return (d2 - d1) / (7 * 24 * 60 * 60 * 1000);
+}
+
 // App
-app.get("/app", (req, res) => {
+app.get("/app", async (req, res) => {
 	if (req.oidc.isAuthenticated()) {
-		res.render("app/main", {"name": req.oidc.user.given_name, "email": req.oidc.email, "pic": req.oidc.user.picture});
+		let user = db.data.users.filter(obj => {return obj.given_name == req.oidc.user.given_name})[0];
+		if (user) {
+			if (!user.hasOwnProperty("last-ret")) {
+				res.render("app/main", {"name": req.oidc.user.given_name, "email": req.oidc.email, "pic": req.oidc.user.picture, "tokens": user.tokens, "can-ret": true });
+			} else if (weeksBetween(user["last-ret"], new Date().getTime()) >= 1) {
+				res.render("app/main", {"name": req.oidc.user.given_name, "email": req.oidc.email, "pic": req.oidc.user.picture, "tokens": user.tokens, "can-ret": true });
+			} else {
+				res.render("app/main", {"name": req.oidc.user.given_name, "email": req.oidc.email, "pic": req.oidc.user.picture, "tokens": user.tokens, "can-ret": false});
+			}
+		} else {
+			let userObj = req.oidc.user;
+			userObj["tokens"] = 0;
+			db.data.users.push(userObj);
+			await db.write();
+			await db.read();
+			
+			user = db.data.users.filter(obj => {return obj.given_name == req.oidc.user.given_name});
+			
+			res.render("app/main", {"name": req.oidc.user.given_name, "email": req.oidc.email, "pic": req.oidc.user.picture, "tokens": user[0].tokens, "can-ret": true });
+		}
 	} else {
 		res.status(404).send("Session expired.");
 	}
 });
 
 app.post("/app", (req, res) => {
+	let user = db.data.users.filter(obj => {return obj.given_name == req.oidc.user.given_name})[0];
+
+	if (user["last-ret"]) {
+		if (weeksBetween(user["last-ret"], new Date().getTime()) < 1) {
+			res.render("app/main", {"name": req.oidc.user.given_name, "email": req.oidc.email, "pic": req.oidc.user.picture, "tokens": user.tokens, "can-ret": false});
+			return;
+		}
+	}
+
 	let email = req.body.email;
 	let password = req.body.password;
 
 	let data = [];
+	let raw_data = [];
 
 	(async () => {
 		// let driver = await new webdriver.Builder().forBrowser(webdriver.Browser.CHROME).setChromeOptions(new chrome.Options().headless()).build();
-		const browser = await puppeteer.launch({headless: true});
+		const browser = await puppeteer.launch({headless: true, args: ["--no-sandbox"]});
 		try {
 			const page = await browser.newPage();
 			await page.goto("https://adfs.svvsd.org/adfs/ls/?client-request-id=cd388547-ac70-46bf-ad73-2f7195983ae3&username=&wa=wsignin1.0&wtrealm=urn%3afederation%3aMicrosoftOnline&wctx=estsredirect%3d2%26estsrequest%3drQQIARAA42KwUs4oKSkottLXz0zWKy4rK07Ryy9K109OzC0oLdYvLikrSszMKxLiEnBvtThbsGa_29pi_cKpM6wez2LkhCtfxaiDz5TgYH-YSfrBnsH6hxgV4y2TzEwSk9OME9MMkiwMjIxTkswNLQ2TTQ2TDBNTTZItLzAyvmBkvMXEGpyYm2M0i5kHbkJxZvEmZhXjVHPLJENDC10L0xQTXZMkM1PdxMRUU91Uc7OUJCMTYwOTJIsLLDyvWHgMWK04OLgE-CXYFBh-sDAuYgV6xl7zgKn24YtOzcGB01er-TGcYtUvL7WoKvRPLim39ExOqaoIz_epDM9NNYrwCEj2S_N2KsvxcksuCfD2LNYOtDW0MpzAxnuKjeEDG2MHO8MsdoYDnIwHeBl-8E2d2NK1ZG_PWw8A0#");
@@ -114,7 +172,7 @@ app.post("/app", (req, res) => {
 			await page.waitForFunction("window.location.href == 'https://ic.svvsd.org/campus/nav-wrapper/student/portal/student/today'");
 			await page.goto("https://ic.svvsd.org/campus/nav-wrapper/student/portal/student/grades");
 			await page.waitForNavigation({ waitUntil: 'networkidle2' });
-			await new Promise(r => setTimeout(r, 000));
+			await new Promise(r => setTimeout(r, 1000));
 			await page.waitForSelector("#main-workspace");
 			const elementHandle = await page.waitForSelector('iframe[id="main-workspace"]');
 			const frame = await elementHandle.contentFrame();
@@ -126,14 +184,30 @@ app.post("/app", (req, res) => {
 			for (let i=0; i < grades.length; i++) {
 				let txt = await (await grades[i].getProperty("innerText")).jsonValue();
 				
-				if (txt) {
+				if (txt.length > 3 && txt.length <= 12) {
 					data.push(txt);
+					raw_data.push(parseFloat(txt.replace("(", "")));
 				}
 			}
+		} catch (err) {
+			console.log("[FATAL]:", err);
+			res.render("app/main", {"name": req.oidc.user.given_name, "email": req.oidc.email, "pic": req.oidc.user.picture, "tokens": user["tokens"], "error": "Sorry! Something went wrong. This was most likely because you entered in the wrong password or username.", "can-ret": true });
 		} finally {
-			data = data.splice(data.length-6, 6);
 			await browser.close();
-			res.render("app/main", {"name": req.oidc.user.given_name, "email": req.oidc.email, "pic": req.oidc.user.picture, "grades": data})
+			
+			for (let i=0; i < raw_data.length; i++) {
+				if (raw_data[i] > 90) {
+					user["tokens"] += 1;
+				}
+			}
+			user["last-ret"] = new Date().getTime();
+
+			await db.write();
+			await db.read();
+
+			user = db.data.users.filter(obj => {return obj.given_name == req.oidc.user.given_name})[0];
+
+			res.render("app/main", {"name": req.oidc.user.given_name, "email": req.oidc.email, "pic": req.oidc.user.picture, "grades": data, "tokens": user["tokens"]})
 		}
 	})();
 
@@ -157,4 +231,4 @@ app.get('*', function(req, res){
 	res.status(404).send('404 Error. Page not found.');
 });
 
-app.listen(PORT, () => console.log(`Server online on port: ${PORT}`));
+app.listen(PORT, () => console.log(`[SERVER]: Online on port: ${PORT}`));

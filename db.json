@@ -1,0 +1,18 @@
+{
+  "users": [
+    {
+      "given_name": "Justin",
+      "family_name": "Ge",
+      "nickname": "ge.justin23",
+      "name": "Justin Ge",
+      "picture": "https://lh3.googleusercontent.com/a-/AOh14Gjc3RYXIw6ZTrcDno2FATe9HyFTA08ueYDns7EXWA=s96-c",
+      "locale": "en",
+      "updated_at": "2022-05-16T23:48:33.131Z",
+      "email": "ge.justin23@svvsd.org",
+      "email_verified": true,
+      "sub": "google-oauth2|109705655612175811220",
+      "tokens": 12,
+      "last-ret": 1652838683594
+    }
+  ]
+}

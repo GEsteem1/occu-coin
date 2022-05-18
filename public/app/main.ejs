@@ -119,9 +119,12 @@
 		<div id="page-wrapper">
 			<section id="main" class="container">
 				<header>
-					<img src="<%= locals.pic %>">
+					<img src="<%= locals.pic %>" alt="Profile Picture">
 					<% if (locals.name) { %>
 						<h2>Welcome, <b><%= locals.name %></b></h2>
+					<% } %>
+					<% if (locals.tokens >= 0) { %>
+						<h3>OccuCoins earned: <b><%= locals.tokens %></b></h3>
 					<% } %>
 					<hr />
 					<a class="button primary" href="/logout">Logout</a>
@@ -141,7 +144,11 @@
 					<form id="main" action="/app" method="POST">
 						<input id="email" type="email" name="email" placeholder="Infinite Campus Email">
 						<input id="password" type="password" name="password" placeholder="Password">
-						<input id="submit" type="submit" value="Retrieve Grades">
+						<% if (locals["can-ret"] == true) { %>
+							<input id="submit" type="submit" value="Retrieve Grades">
+						<% } else { %>
+							<input id="submit" type="submit" value="Retrieve Grades" disabled>
+						<% } %>
 					</form>
 				</div>
 			</section>
